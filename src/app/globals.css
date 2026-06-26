@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-nunito: 'Nunito', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-nunito), sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 55%, #ECFEFF 100%);
+  overflow-x: hidden;
+}
+
+/* shimmer card border */
+.card-shimmer {
+  position: relative;
+}
+.card-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #38BDF8, #22D3EE, #0EA5E9, #67E8F9, #38BDF8);
+  background-size: 300% 300%;
+  animation: borderShimmer 4s ease infinite;
+  z-index: -1;
+  opacity: 0.55;
+}
+
+/* floating heart bg */
+.heart-float {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatUp linear infinite;
+  opacity: 0;
+}
+
+/* sparkle popup */
+.sparkle-pop {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  animation: sparklePop .7s ease forwards;
+}
+
+/* ripple */
+.ripple-el {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.28);
+  transform: scale(0);
+  animation: rippleAnim .6s ease-out forwards;
+  pointer-events: none;
+}
+
+/* no button transition */
+#no-btn {
+  transition: top .25s cubic-bezier(.34,1.56,.64,1),
+              left .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes borderShimmer {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes floatUp {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg) scale(.6); }
+  10%  { opacity: .55; }
+  90%  { opacity: .3; }
+  100% { opacity: 0; transform: translateY(-110vh) rotate(360deg) scale(1.1); }
+}
+@keyframes emojiFloat {
+  0%,100% { transform: translateY(0) rotate(-3deg); }
+  50%     { transform: translateY(-8px) rotate(3deg); }
+}
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(24px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sparklePop {
+  0%   { opacity: 1; transform: scale(0) rotate(0deg); }
+  50%  { opacity: 1; transform: scale(1.4) rotate(20deg); }
+  100% { opacity: 0; transform: scale(.5) rotate(40deg) translateY(-30px); }
+}
+@keyframes rippleAnim {
+  to { transform: scale(4); opacity: 0; }
+}
+@keyframes confettiBounce {
+  from { transform: scale(0) rotate(-10deg); }
+  to   { transform: none; }
+}
+
+.emoji-float-anim { animation: emojiFloat 3s ease-in-out infinite; }
+.screen-in-anim   { animation: screenIn .45s cubic-bezier(.34,1.56,.64,1) both; }
+.confetti-anim    { animation: confettiBounce .6s cubic-bezier(.34,1.56,.64,1); }
