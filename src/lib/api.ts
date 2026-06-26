@@ -87,9 +87,13 @@ export async function loadTrips(): Promise<SavedTrip[]> {
 export async function createTrip(
   data: Omit<SavedTrip, "id" | "savedAt" | "journalCount">,
 ): Promise<SavedTrip> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
   const { data: row, error } = await supabase
     .from("trips")
     .insert({
+      user_id:    user.id,
       trip_date:  data.date,
       days:       data.days,
       start_time: data.time,
@@ -143,12 +147,16 @@ export async function saveJournalEntry(
   dayIndex: number,
   entry: DayEntry,
 ): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
   const { data, error } = await supabase
     .from("journal_entries")
     .upsert(
       {
         ...(entry.id ? { id: entry.id } : {}),
         trip_id:    tripId,
+        user_id:    user.id,
         day_index:  dayIndex,
         note:       entry.note,
         mood:       entry.mood,

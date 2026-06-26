@@ -21,10 +21,10 @@ export default function ScreenInvite({ onYes }: Props) {
       <span className="emoji-float-anim text-6xl mb-5 drop-shadow-lg" style={{ filter: "drop-shadow(0 4px 12px rgba(56,189,248,.3))" }}>
         🌍
       </span>
-      <h1 className="text-2xl mb-2 leading-tight bg-gradient-to-r from-sky-700 to-cyan-500 bg-clip-text text-transparent">
+      <h1 className="text-2xl font-extrabold mb-2 leading-tight text-center bg-gradient-to-r from-sky-700 to-cyan-500 bg-clip-text text-transparent">
         Аяллын төлөвлөгөө гаргацгаая!
       </h1>
-      <p className="text-ink-s text-[15px] mb-8 leading-relaxed max-w-[300px]">
+      <p className="text-ink-s text-[15px] mb-8 leading-relaxed max-w-[300px] text-center">
         Надтай хамт аялахдаа бэлэн үү?🧳
       </p>
 
