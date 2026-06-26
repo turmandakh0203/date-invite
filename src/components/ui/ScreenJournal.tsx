@@ -21,8 +21,24 @@ export default function ScreenJournal({ trip, userId, onBack }: Props) {
   const [saveStatus, setSaveStatus]   = useState<"idle" | "saving" | "saved">("idle");
   const [uploading, setUploading]     = useState(false);
   const [showPacking, setShowPacking] = useState(false);
+  const [checkedPacking, setCheckedPacking] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(`packing_checked_${trip.id}`);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
   const fileRef   = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function togglePacking(item: string) {
+    setCheckedPacking(prev => {
+      const next = new Set(prev);
+      next.has(item) ? next.delete(item) : next.add(item);
+      localStorage.setItem(`packing_checked_${trip.id}`, JSON.stringify([...next]));
+      return next;
+    });
+  }
 
   useEffect(() => {
     loadJournal(trip.id, trip.days)
@@ -234,7 +250,7 @@ export default function ScreenJournal({ trip, userId, onBack }: Props) {
               </button>
             </div>
 
-            {/* ── Авах зүйлс (collapsible) ── */}
+            {/* ── Авах зүйлс (collapsible checklist) ── */}
             {trip.packing.length > 0 && (
               <div className="rounded-[16px] border border-sky-200 overflow-hidden">
                 <button
@@ -245,19 +261,52 @@ export default function ScreenJournal({ trip, userId, onBack }: Props) {
                     <span>🎒</span>
                     Авах зүйлс
                     <span className="ml-1 text-[12px] font-normal text-ink-s">
-                      ({trip.packing.length} зүйл)
+                      {checkedPacking.size}/{trip.packing.length} бэлэн
                     </span>
                   </div>
                   <span className="text-ink-s text-[13px]">{showPacking ? "▲" : "▼"}</span>
                 </button>
+
+                {/* Progress bar */}
+                <div className="h-1 bg-sky-100">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-300"
+                    style={{ width: `${(checkedPacking.size / trip.packing.length) * 100}%` }}
+                  />
+                </div>
+
                 {showPacking && (
-                  <div className="px-4 pb-4 pt-2 bg-sky-50 border-t border-sky-100 flex flex-wrap gap-2">
-                    {trip.packing.map(item => (
-                      <span key={item}
-                            className="rounded-full bg-white border border-sky-200 px-3 py-1 text-[13px] text-sky-700 font-medium">
-                        {item}
-                      </span>
-                    ))}
+                  <div className="px-3 py-3 bg-sky-50 border-t border-sky-100 flex flex-col gap-1.5">
+                    {trip.packing.map(item => {
+                      const isChecked = checkedPacking.has(item);
+                      return (
+                        <button
+                          key={item}
+                          onClick={() => togglePacking(item)}
+                          className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-[12px] text-left
+                                      transition-all duration-150
+                                      ${isChecked
+                                        ? "bg-green-50 border border-green-200"
+                                        : "bg-white border border-sky-200 hover:bg-sky-50"
+                                      }`}
+                        >
+                          <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 text-[11px] font-bold transition-all duration-150
+                                            ${isChecked ? "bg-green-500 border-green-500 text-white" : "border-sky-300"}`}>
+                            {isChecked && "✓"}
+                          </span>
+                          <span className={`text-[14px] font-medium transition-all duration-150
+                                            ${isChecked ? "text-green-700 line-through opacity-60" : "text-ink"}`}>
+                            {item}
+                          </span>
+                        </button>
+                      );
+                    })}
+
+                    {checkedPacking.size === trip.packing.length && (
+                      <div className="text-center text-[13px] font-bold text-green-600 py-2">
+                        🎉 Бүх зүйл бэлэн болсон!
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
