@@ -9,12 +9,13 @@ interface Props {
 type Mode = "login" | "register";
 
 export default function ScreenAuth({ onAuth }: Props) {
-  const [mode, setMode]       = useState<Mode>("login");
-  const [email, setEmail]     = useState("");
+  const [mode, setMode]         = useState<Mode>("login");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [showPw, setShowPw]   = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+  const [showPw, setShowPw]     = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,18 +25,23 @@ export default function ScreenAuth({ onAuth }: Props) {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        onAuth();
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+        if (data.session) {
+          onAuth(); // email confirmation унтраалттай
+        } else {
+          setNeedsConfirm(true); // email confirmation асаалттай
+        }
       }
-      onAuth();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Алдаа гарлаа";
-      // Mongolian-friendly messages
-      if (msg.includes("Invalid login credentials")) setError("Имэйл эсвэл нууц үг буруу байна.");
-      else if (msg.includes("Email not confirmed")) setError("Имэйлээ баталгаажуулна уу. Ирсэн мэдэгдэл дээр дарна уу.");
+      if (msg.includes("Invalid login credentials"))  setError("Имэйл эсвэл нууц үг буруу байна.");
+      else if (msg.includes("Email not confirmed"))   setError("Имэйлээ баталгаажуулна уу. Шуудан хайрцагаа шалгаарай.");
       else if (msg.includes("User already registered")) setError("Энэ имэйл бүртгэлтэй байна. Нэвтрэх хэсгийг ашиглана уу.");
-      else if (msg.includes("Password should be at least")) setError("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.");
+      else if (msg.includes("Password should be"))    setError("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.");
+      else if (msg.includes("rate limit"))            setError("Хэт олон удаа оролдлоо. Хэсэг хүлээгээд дахин оролдоорой.");
       else setError(msg);
     } finally {
       setLoading(false);
@@ -49,6 +55,34 @@ export default function ScreenAuth({ onAuth }: Props) {
       options: { redirectTo: typeof window !== "undefined" ? window.location.origin : "" },
     });
     if (error) setError(error.message);
+  }
+
+  // ── Email confirmation pending ──────────────────────────────────────────
+  if (needsConfirm) {
+    return (
+      <div className="screen-in-anim flex flex-col items-center w-full text-center">
+        <span className="text-6xl mb-4">📬</span>
+        <h2 className="text-xl font-extrabold mb-2 bg-gradient-to-r from-sky-700 to-cyan-500 bg-clip-text text-transparent">
+          Имэйлээ шалгаарай
+        </h2>
+        <p className="text-ink-s text-[14px] leading-relaxed max-w-[280px] mb-6">
+          <span className="font-bold text-ink">{email}</span> хаяг руу баталгаажуулах холбоос явуулсан.
+          Имэйл дэх холбоос дээр дарсны дараа нэвтэрч болно.
+        </p>
+        <div className="w-full max-w-[300px] rounded-[16px] bg-amber-50 border border-amber-200 px-4 py-3 text-[13px] text-amber-700 mb-6">
+          💡 Хурдан туршихыг хүсвэл: Supabase → Authentication → Providers → Email →
+          <span className="font-bold"> "Confirm email" OFF</span> болгоно уу.
+        </div>
+        <button
+          onClick={() => { setNeedsConfirm(false); setMode("login"); }}
+          className="w-full max-w-[300px] py-3.5 rounded-[18px] font-bold text-[15px] text-white
+                     bg-gradient-to-br from-sky-500 to-cyan-500
+                     shadow-[0_6px_20px_rgba(56,189,248,.28)] hover:-translate-y-0.5 transition-all duration-200"
+        >
+          Нэвтрэх хуудас руу буцах
+        </button>
+      </div>
+    );
   }
 
   return (
