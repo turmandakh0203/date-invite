@@ -9,9 +9,10 @@ interface Props {
   route: string;
   itinerary: string[];
   packing: string[];
+  onJournal?: () => void;
 }
 
-export default function ScreenConfirm({ date, days, time, acts, route, itinerary, packing }: Props) {
+export default function ScreenConfirm({ date, days, time, acts, route, itinerary, packing, onJournal }: Props) {
   const [toast, setToast] = useState<{ msg: string; icon: string } | null>(null);
 
   const shareText =
@@ -232,6 +233,21 @@ export default function ScreenConfirm({ date, days, time, acts, route, itinerary
           </div>
         )}
       </div>
+
+      {/* Journal entry button */}
+      {onJournal && (
+        <button
+          onClick={onJournal}
+          className="w-full max-w-[320px] mt-4 py-3.5 rounded-[18px] font-bold text-[15px]
+                     bg-gradient-to-br from-sky-500 to-cyan-500 text-white
+                     shadow-[0_6px_20px_rgba(56,189,248,.28)]
+                     hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(56,189,248,.38)]
+                     transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          <span className="text-xl">📖</span>
+          Аяллын тэмдэглэл нэмэх
+        </button>
+      )}
     </div>
   );
 }
