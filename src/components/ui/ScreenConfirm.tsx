@@ -5,7 +5,6 @@ interface Props {
   date: string;
   days: number;
   time: string;
-  acts: string[];
   route: string;
   itinerary: string[];
   packing: string[];
@@ -15,7 +14,7 @@ interface Props {
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export default function ScreenConfirm({ date, days, time, acts, route, itinerary, packing, onSave, onJournal }: Props) {
+export default function ScreenConfirm({ date, days, time, route, itinerary, packing, onSave, onJournal }: Props) {
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
   async function handleSave() {
@@ -46,10 +45,9 @@ export default function ScreenConfirm({ date, days, time, acts, route, itinerary
            style={{ background: "linear-gradient(135deg,#EFF6FF,#F0F9FF)" }}>
         {[
           { icon: "📅", label: "Эхлэх өдөр",        value: date },
-          { icon: "🧭", label: "Маршрут",             value: route },
           { icon: "📆", label: "Үргэлжлэх хугацаа",  value: `${days} өдөр` },
           { icon: "🕐", label: "Эхлэх цаг",          value: time },
-          { icon: "🌟", label: "Аяллын төрөл",       value: acts.join(", ") },
+          { icon: "🧭", label: "Маршрут",             value: route },
         ].map((row, i, arr) => (
           <div key={row.label}
                className={`flex items-center gap-3 py-2 text-[14px] text-ink-m ${i < arr.length - 1 ? "border-b border-sky-100" : ""}`}>

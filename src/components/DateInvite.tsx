@@ -172,7 +172,7 @@ export default function DateInvite() {
                 {step === "confirm"   && (
                   <ScreenConfirm
                     date={date} days={days} time={time}
-                    acts={acts} route={route}
+                    route={route}
                     itinerary={itinerary} packing={packing}
                     onSave={() => handleSaveTrip(packing)}
                     onJournal={() => savedTrip && openJournal(savedTrip)}
