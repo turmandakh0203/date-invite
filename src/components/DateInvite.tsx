@@ -60,6 +60,8 @@ export default function DateInvite() {
   function goBack() {
     if (step === "journal") { setStep("history"); return; }
     if (step === "history") { setStep("invite");  return; }
+    // Аялал хадгалагдсан бол confirm → invite (packing руу биш)
+    if (step === "confirm" && savedTrip) { setStep("invite"); return; }
     setStep(prev => {
       const i = PLAN_STEPS.indexOf(prev);
       return i > 0 ? PLAN_STEPS[i - 1] : prev;
