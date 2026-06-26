@@ -122,7 +122,7 @@ export default function ScreenJournal({ trip, userId, onBack }: Props) {
   return (
     <div className="screen-in-anim flex flex-col w-full">
       {/* Trip summary */}
-      <div className="rounded-[16px] p-4 mb-4 border border-sky-200"
+      <div className="rounded-[16px] p-4 my-4 border border-sky-200"
            style={{ background: "linear-gradient(135deg,#EFF6FF,#F0F9FF)" }}>
         <div className="font-bold text-ink text-[15px]">✈️ {trip.route}</div>
         <div className="text-ink-s text-[12px] mt-0.5">
