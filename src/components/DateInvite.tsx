@@ -69,16 +69,15 @@ export default function DateInvite() {
   // ── Handlers ────────────────────────────────────────────────────────────
   function handleDate(d: string, n: number) { setDate(d); setDays(n); setStep("activity"); }
 
-  async function handlePacking(items: string[]) {
+  function handlePacking(items: string[]) {
     setPacking(items);
-    try {
-      const trip = await createTrip({ date, days, time, acts, route, itinerary, packing: items });
-      setSavedTrip(trip);
-    } catch (e) {
-      console.error("Trip save failed", e);
-    }
     setStep("confirm");
     setTimeout(() => launchConfetti(), 600);
+  }
+
+  async function handleSaveTrip(items: string[]): Promise<void> {
+    const trip = await createTrip({ date, days, time, acts, route, itinerary, packing: items });
+    setSavedTrip(trip);
   }
 
   function openJournal(trip: SavedTrip) {
@@ -173,6 +172,7 @@ export default function DateInvite() {
                     date={date} days={days} time={time}
                     acts={acts} route={route}
                     itinerary={itinerary} packing={packing}
+                    onSave={() => handleSaveTrip(packing)}
                     onJournal={() => savedTrip && openJournal(savedTrip)}
                   />
                 )}
