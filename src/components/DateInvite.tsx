@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { useAnimations } from "@/lib/animations";
-import { saveTrip, loadTrips, SavedTrip } from "@/lib/storage";
+import { createTrip, SavedTrip } from "@/lib/api";
 import HeartsBackground  from "./ui/HeartsBackground";
+import ScreenAuth        from "./ui/ScreenAuth";
 import ScreenInvite      from "./ui/ScreenInvite";
 import ScreenDate        from "./ui/ScreenDate";
 import ScreenActivity    from "./ui/ScreenActivity";
@@ -25,21 +28,35 @@ const PLAN_STEPS: Step[] = [
 ];
 
 export default function DateInvite() {
-  const [step, setStep]             = useState<Step>("invite");
-  const [date, setDate]             = useState("");
-  const [days, setDays]             = useState(2);
-  const [acts, setActs]             = useState<string[]>([]);
-  const [time, setTime]             = useState("");
-  const [route, setRoute]           = useState("");
-  const [itinerary, setItinerary]   = useState<string[]>([]);
-  const [packing, setPacking]       = useState<string[]>([]);
-  const [savedTrip, setSavedTrip]   = useState<SavedTrip | null>(null);
+  // ── Auth state ──────────────────────────────────────────────────────────
+  const [user, setUser]         = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ── App state ───────────────────────────────────────────────────────────
+  const [step, setStep]           = useState<Step>("invite");
+  const [date, setDate]           = useState("");
+  const [days, setDays]           = useState(2);
+  const [acts, setActs]           = useState<string[]>([]);
+  const [time, setTime]           = useState("");
+  const [route, setRoute]         = useState("");
+  const [itinerary, setItinerary] = useState<string[]>([]);
+  const [packing, setPacking]     = useState<string[]>([]);
+  const [savedTrip, setSavedTrip] = useState<SavedTrip | null>(null);
   const [journalTrip, setJournalTrip] = useState<SavedTrip | null>(null);
-  const [tripCount, setTripCount]   = useState(0);
   const { launchConfetti } = useAnimations();
 
-  useEffect(() => { setTripCount(loadTrips().length); }, []);
-
+  // ── Navigation ──────────────────────────────────────────────────────────
   function goBack() {
     if (step === "journal") { setStep("history"); return; }
     if (step === "history") { setStep("invite");  return; }
@@ -49,17 +66,17 @@ export default function DateInvite() {
     });
   }
 
-  function handleDate(selectedDate: string, duration: number) {
-    setDate(selectedDate);
-    setDays(duration);
-    setStep("activity");
-  }
+  // ── Handlers ────────────────────────────────────────────────────────────
+  function handleDate(d: string, n: number) { setDate(d); setDays(n); setStep("activity"); }
 
-  function handlePacking(items: string[]) {
+  async function handlePacking(items: string[]) {
     setPacking(items);
-    const trip = saveTrip({ date, days, time, acts, route, itinerary, packing: items });
-    setSavedTrip(trip);
-    setTripCount(c => c + 1);
+    try {
+      const trip = await createTrip({ date, days, time, acts, route, itinerary, packing: items });
+      setSavedTrip(trip);
+    } catch (e) {
+      console.error("Trip save failed", e);
+    }
     setStep("confirm");
     setTimeout(() => launchConfetti(), 600);
   }
@@ -70,6 +87,18 @@ export default function DateInvite() {
   }
 
   const showBack = step !== "invite";
+
+  // ── Loading ─────────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <>
+        <HeartsBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <span className="text-4xl animate-pulse">✈️</span>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -100,54 +129,60 @@ export default function DateInvite() {
                 onClick={goBack}
                 className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full
                            border border-sky-200 bg-white/90 px-2.5 py-1.5
-                           text-sm font-semibold text-sky-700 shadow-sm
-                           hover:bg-sky-50 transition"
+                           text-sm font-semibold text-sky-700 shadow-sm hover:bg-sky-50 transition"
               >
                 ← Буцах
               </button>
             )}
 
-            {/* History button — shown only on invite screen when trips exist */}
-            {step === "invite" && tripCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setStep("history")}
-                className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full
-                           border border-sky-200 bg-white/90 px-2.5 py-1.5
-                           text-sm font-semibold text-sky-700 shadow-sm
-                           hover:bg-sky-50 transition"
-              >
-                📖 Түүх
-              </button>
+            {/* History + Logout buttons on invite screen */}
+            {step === "invite" && user && (
+              <div className="absolute right-4 top-4 flex items-center gap-2">
+                <button
+                  onClick={() => setStep("history")}
+                  className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white/90
+                             px-2.5 py-1.5 text-sm font-semibold text-sky-700 shadow-sm hover:bg-sky-50 transition"
+                >
+                  📖 Түүх
+                </button>
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-white/90
+                             px-2.5 py-1.5 text-sm font-semibold text-slate-500 shadow-sm hover:bg-slate-50 transition"
+                  title="Гарах"
+                >
+                  ↩
+                </button>
+              </div>
             )}
 
             {/* ── Screens ── */}
-            {step === "invite"    && <ScreenInvite    onYes={() => setStep("date")} />}
-            {step === "date"      && <ScreenDate      onNext={handleDate} />}
-            {step === "activity"  && <ScreenActivity  onNext={(a) => { setActs(a); setStep("time"); }} />}
-            {step === "time"      && <ScreenTime      onNext={(t) => { setTime(t); setStep("route"); }} />}
-            {step === "route"     && <ScreenRoute     onNext={(r) => { setRoute(r); setStep("itinerary"); }} />}
-            {step === "itinerary" && <ScreenItinerary days={days} onNext={(items) => { setItinerary(items); setStep("packing"); }} />}
-            {step === "packing"   && <ScreenPacking   onNext={handlePacking} />}
-            {step === "confirm"   && (
-              <ScreenConfirm
-                date={date} days={days} time={time}
-                acts={acts} route={route}
-                itinerary={itinerary} packing={packing}
-                onJournal={() => savedTrip && openJournal(savedTrip)}
-              />
-            )}
-            {step === "history" && (
-              <ScreenHistory
-                onOpen={openJournal}
-                onBack={() => setStep("invite")}
-              />
-            )}
-            {step === "journal" && journalTrip && (
-              <ScreenJournal
-                trip={journalTrip}
-                onBack={() => setStep("history")}
-              />
+            {!user ? (
+              <ScreenAuth onAuth={() => {}} />
+            ) : (
+              <>
+                {step === "invite"    && <ScreenInvite    onYes={() => setStep("date")} />}
+                {step === "date"      && <ScreenDate      onNext={handleDate} />}
+                {step === "activity"  && <ScreenActivity  onNext={(a) => { setActs(a); setStep("time"); }} />}
+                {step === "time"      && <ScreenTime      onNext={(t) => { setTime(t); setStep("route"); }} />}
+                {step === "route"     && <ScreenRoute     onNext={(r) => { setRoute(r); setStep("itinerary"); }} />}
+                {step === "itinerary" && <ScreenItinerary days={days} onNext={(it) => { setItinerary(it); setStep("packing"); }} />}
+                {step === "packing"   && <ScreenPacking   onNext={handlePacking} />}
+                {step === "confirm"   && (
+                  <ScreenConfirm
+                    date={date} days={days} time={time}
+                    acts={acts} route={route}
+                    itinerary={itinerary} packing={packing}
+                    onJournal={() => savedTrip && openJournal(savedTrip)}
+                  />
+                )}
+                {step === "history" && (
+                  <ScreenHistory onOpen={openJournal} onBack={() => setStep("invite")} />
+                )}
+                {step === "journal" && journalTrip && (
+                  <ScreenJournal trip={journalTrip} userId={user.id} onBack={() => setStep("history")} />
+                )}
+              </>
             )}
           </div>
         </div>
