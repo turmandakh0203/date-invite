@@ -5,7 +5,6 @@ import {
   loadJournal, saveJournalEntry, uploadPhoto, deletePhoto,
 } from "@/lib/api";
 
-const MOODS  = ["🤩", "😊", "😎", "😌", "🥲", "😴", "😤", "🤔"];
 const MAX_PH = 6;
 
 interface Props {
@@ -149,8 +148,7 @@ export default function ScreenJournal({ trip, userId, onBack }: Props) {
                       : "bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-100"}`}
                 >
                   {i + 1}-р өдөр
-                  {e.mood && <span className="text-base leading-none">{e.mood}</span>}
-                  {!e.mood && (e.note.trim() || e.photos.length > 0) && (
+                  {(e.note.trim() || e.photos.length > 0) && (
                     <span className={`w-1.5 h-1.5 rounded-full ${activeDay === i ? "bg-white" : "bg-sky-400"}`} />
                   )}
                 </button>
@@ -175,24 +173,6 @@ export default function ScreenJournal({ trip, userId, onBack }: Props) {
                 ) : (
                   <p className="text-[13px] text-ink-s italic">Аяллын хуваарь бичигдээгүй байна</p>
                 )}
-              </div>
-            </div>
-
-            {/* ── Mood ── */}
-            <div>
-              <div className="text-[11px] font-bold text-ink-s uppercase tracking-widest mb-2">
-                Өдрийн мэдрэмж
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {MOODS.map(m => (
-                  <button key={m}
-                    onClick={() => patchEntry(activeDay, { mood: dayEntry.mood === m ? "" : m })}
-                    className={`w-10 h-10 rounded-full text-xl flex items-center justify-center transition-all duration-150
-                      ${dayEntry.mood === m
-                        ? "bg-sky-100 ring-2 ring-sky-400 scale-110 shadow-sm"
-                        : "bg-slate-50 hover:bg-sky-50 hover:scale-105"}`}
-                  >{m}</button>
-                ))}
               </div>
             </div>
 
