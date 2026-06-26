@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import OfflineBanner from "@/components/ui/OfflineBanner";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -74,7 +75,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="mn">
-      <body className={`${nunito.variable} font-nunito`}>{children}</body>
+      <body className={`${nunito.variable} font-nunito`}>
+        <OfflineBanner />
+        {children}
+      </body>
     </html>
   );
 }
